@@ -2,17 +2,19 @@
 
 # ------------------------------------------------------------------------------------------
 # Convert MIT climate data to the format needed for xanthos. SLURM array
-# processes each scenario, model combination per node.
+# processes each scenario, model combination per node. There are 126 scenario, model
+# combinations (e.g., 0-125). The python code is set to process each realization in
+# parallel per node.
 #
 # TO RUN:
-# sbatch --array=0-126 /rcfs/projects/gcims/projects/mit_climate/code/run_mit_to_xanthos.sl
+# sbatch --array=0-125 <your_dir_path>/run_mit_to_xanthos.sl
 # ------------------------------------------------------------------------------------------
 
 #SBATCH -n 1
-#SBATCH -t 01:00:00
-#SBATCH -A IHESD
+#SBATCH -t <your_waltime, e.g., 07:00:00>
+#SBATCH -A <your_project>
 #SBATCH -J mit-climate
-#SBATCH -p short
+#SBATCH -p <your_partition>
 
 # Load Modules
 module purge
@@ -23,13 +25,13 @@ source /share/apps/python/miniconda3.9/etc/profile.d/conda.sh
 NJOBS=-1
 
 # input climate data directory holding the scenario/model/realization directory structure
-CLIMATE_DIR="/rcfs/projects/gcims/projects/mit_climate/temp"
+CLIMATE_DIR="<your_directory>"
 
 # directory to write the outputs to
-OUTPUT_DIR="/rcfs/projects/gcims/projects/mit_climate/data/outputs"
+OUTPUT_DIR="<your_directory>"
 
 # xanthos reference file path with filename and extension
-XANTHOS_REF_FILE="/rcfs/projects/gcims/projects/mit_climate/data/reference/xanthos_0p5deg_landcell_reference.csv"
+XANTHOS_REF_FILE="<your_directory>/xanthos_0p5deg_landcell_reference.csv"
 
 start=$(date)
 echo "Start:  $start"
