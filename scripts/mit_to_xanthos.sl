@@ -36,7 +36,7 @@ XANTHOS_REF_FILE="<your_directory>/xanthos_0p5deg_landcell_reference.csv"
 start=$(date)
 echo "Start:  $start"
 
-python /rcfs/projects/gcims/projects/mit_climate/code/mit_to_xanthos.py $SLURM_ARRAY_TASK_ID $NJOBS $CLIMATE_DIR $OUTPUT_DIR $XANTHOS_REF_FILE
+python <your_directory>/mit_to_xanthos.py $SLURM_ARRAY_TASK_ID $NJOBS $CLIMATE_DIR $OUTPUT_DIR $XANTHOS_REF_FILE
 
 end=$(date)
 echo "End:  $end"
