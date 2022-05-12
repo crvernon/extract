@@ -1,4 +1,5 @@
 import os
+import calendar
 import glob
 import itertools
 import sys
@@ -69,8 +70,49 @@ def generate_coordinate_reference(xanthos_lat_lon: np.ndarray,
     return climate_lat_idx, climate_lon_idx
 
 
+def get_days_in_month(file_basename: str) -> list:
+    """Generate a list of the number of days in each month of the record of interest including leap years.
+
+    :param file_basename:                           Basename of file with underscore separated start year and through
+                                                    year in the first and second positions.
+    :type file_basename:                            str
+
+    :returns:                                       A list of days in the month for the period of interest.
+
+    """
+
+    days_in_month_standard = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    days_in_month_leap = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+    split_name = file_basename.split("_")
+
+    try:
+        start_year = int(split_name[0])
+    except ValueError:
+        raise (
+            f"Expected year in YYYY format as first position in underscore separated file name.  Received:  '{split_name[0]}'")
+
+    try:
+        through_year = int(split_name[1])
+    except ValueError:
+        raise (
+            f"Expected year in YYYY format as second position in underscore separated file name.  Received:  '{split_name[1]}'")
+
+    year_list = range(start_year, through_year + 1, 1)
+
+    days_in_month = []
+    for i in year_list:
+
+        if calendar.isleap(i):
+            days_in_month.extend(days_in_month_leap)
+        else:
+            days_in_month.extend(days_in_month_standard)
+
+    return days_in_month
+
+
 def extract_climate_data(ds: xr.Dataset,
-                         target_variable_list: list,
+                         target_variable_dict: dict,
                          climate_lat_idx: list,
                          climate_lon_idx: list) -> dict:
     """Extract target variables for each xanthos grid cell.
@@ -78,8 +120,8 @@ def extract_climate_data(ds: xr.Dataset,
     :param ds:                                      Input xarray dataset from the climate NetCDF file.
     :type ds:                                       xr.Dataset
 
-    :param target_variable_list:                    List of variables to extract data for.
-    :type target_variable_list:                     list
+    :param target_variable_dict:                    Dictionary of variables to extract data for and their target units.
+    :type target_variable_dict:                     dict
 
     :param climate_lat_idx:                         List of index values from the climate data corresponding with
                                                     xanthos grid cell latitudes.
@@ -93,12 +135,12 @@ def extract_climate_data(ds: xr.Dataset,
 
     """
 
-    return {i: ds[i].values[:, climate_lat_idx, climate_lon_idx].T for i in target_variable_list}
+    return {i: ds[i].values[:, climate_lat_idx, climate_lon_idx].T for i in target_variable_dict.keys()}
 
 
 def run_extraction(climate_file: str,
                    xanthos_reference_file: str,
-                   target_variables: list,
+                   target_variables: dict,
                    output_directory: str,
                    scenario: str,
                    model: str) -> str:
@@ -111,8 +153,8 @@ def run_extraction(climate_file: str,
     :param xanthos_reference_file:                  Full path with file name and extension to the xanthos reference file.
     :type xanthos_reference_file:                   str
 
-    :param target_variables:                        List of variables to extract data for.
-    :type target_variables:                         list
+    :param target_variables:                        Dict of variables to extract data for and their target units.
+    :type target_variables:                         dict
 
     :param output_directory:                        Full path to the directory where the output file will be stored.
     :type output_directory:                         str
@@ -139,13 +181,26 @@ def run_extraction(climate_file: str,
 
     # generate a dictionary of variable to extracted array of xanthos grid cell locations
     data = extract_climate_data(ds=ds,
-                                target_variable_list=target_variables,
+                                target_variable_dict=target_variables,
                                 climate_lat_idx=climate_lat_idx,
                                 climate_lon_idx=climate_lon_idx)
 
     # create output file name from input file
     basename = os.path.splitext(os.path.basename(climate_file))[0]
     output_filename = os.path.join(output_directory, f"{scenario}__{model}__{basename}.npz")
+
+    # convert units for temperature variables from K to C
+    data["Tair"] += -273.15
+    data["Tair_trend"] += -273.15
+    data["Tmin"] += -273.15
+    data["Tmin_trend"] += -273.15
+    data["Tmax"] += -273.15
+    data["Tmax_trend"] += -273.15
+
+    # convert units for precipitation from mm/day to mm/month; assumes start month of January
+    days_in_month_list = get_days_in_month(basename)
+    data["PRECTmmd"] *= days_in_month_list
+    data["PRECTmmd_trend"] *= days_in_month_list
 
     # write selected data to a compressed numpy structure
     np.savez_compressed(file=output_filename,
@@ -173,7 +228,7 @@ def run_extraction(climate_file: str,
 
 def run_extraction_parallel(data_directory: str,
                             xanthos_reference_file: str,
-                            target_variables: list,
+                            target_variables: dict,
                             output_directory: str,
                             scenario: str,
                             model: str,
@@ -187,8 +242,8 @@ def run_extraction_parallel(data_directory: str,
     :param xanthos_reference_file:                  Full path with file name and extension to the xanthos reference file.
     :type xanthos_reference_file:                   str
 
-    :param target_variables:                        List of variables to extract data for.
-    :type target_variables:                         list
+    :param target_variables:                        Dictionary of variables to extract data for and their target units.
+    :type target_variables:                         dict
 
     :param output_directory:                        Full path to the directory where the output file will be stored.
     :type output_directory:                         str
@@ -233,10 +288,25 @@ if __name__ == "__main__":
     # xanthos reference file path with filename and extension
     xanthos_reference_file = sys.argv[5]
 
-    # list of target variables to extract
-    target_variables = ["FLDS", "FLDS_trend", "FSDS", "FSDS_trend", "Hurs", "Hurs_trend", "Huss", "Huss_trend",
-                        "PRECTmmd", "PRECTmmd_trend", "Tair", "Tair_trend", "Tmax", "Tmax_trend",
-                        "Tmin", "Tmin_trend", "WIND", "WIND_trend"]
+    # dict of target variables to extract with TARGET units, not native units; some require conversion in the code
+    target_variables = {"FLDS": "w-per-m2",  # surface incident longwave radiation
+                        "FLDS_trend": "w-per-m2",
+                        "FSDS": "w-per-m2",  # surface incident shortwave radiation
+                        "FSDS_trend": "w-per-m2",
+                        "Hurs": "percent",  # near surface relative humidity
+                        "Hurs_trend": "percent",
+                        "Huss": "percent",  # near surface specific humidity,
+                        "Huss_trend": "percent",
+                        "PRECTmmd": "mm-per-month",  # precipitation rate (native units mm/day)
+                        "PRECTmmd_trend": "mm-per-month",
+                        "Tair": "degrees-C",  # near surface air temperature (native units K)
+                        "Tair_trend": "degrees-C",
+                        "Tmax": "degrees-C",  # monthly mean of daily maximum near surface air temperature (native units K)
+                        "Tmax_trend": "degrees-C",
+                        "Tmin": "degrees-C",  # monthly mean of daily minimum near surface air temperature (native units K)
+                        "Tmin_trend": "degrees-C",
+                        "WIND": "m-per-sec",  # near surface wind speed
+                        "WIND_trend": "m-per-sec"}
 
     # scenario name to process; should mirror the associated directory name
     scenario_list = ['PARIS_2C', 'PFCOV.1', 'BASECOV', 'PARIS_1p5C.1', 'PARIS_1p5C', 'PARIS_2C.1', 'PFCOV']
