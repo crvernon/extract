@@ -271,6 +271,45 @@ def run_extraction_parallel(data_directory: str,
     return results
 
 
+def unpack_files(npz_file: str,
+                 output_directory: str,
+                 target_variables: dict):
+    """Unpack individual variables to their own NPY files from compressed NPZ file.
+
+    :param npz_file:                            Full path with file name and extension to the NPZ file output containing
+                                                all processed climate data variables in Xanthos format.
+    :type npz_file:                             str
+
+    :param output_directory:                    Full path to the target output directory.
+    :type output_directory:                     str
+
+    :param target_variables:                    Dictionary of variables to extract data for and their target units.
+    :type target_variables:                     dict
+
+    :returns:                                   List of files created.
+
+    """
+
+    # strip basename without extension from input file name
+    npz_basename = os.path.splitext(os.path.basename(npz_file))[0]
+
+    # load NPZ file
+    processed = np.load(npz_file)
+
+    outfile_list = []
+    for i in target_variables.keys():
+
+        # construct outfile name
+        output_file = os.path.join(output_directory, f"{i}__{npz_basename}_{target_variables[i]}.npy")
+
+        # write target variable to npy file
+        np.save(output_file, processed[i.casefold()])
+
+        outfile_list.append(output_file)
+
+    return outfile_list
+
+
 if __name__ == "__main__":
 
     # task index from SLURM array to run specific scenario, model combinations
