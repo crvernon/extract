@@ -7,7 +7,7 @@
 # parallel per node.
 #
 # TO RUN:
-# sbatch --array=0-125 <your_dir_path>/run_mit_to_xanthos.sl
+# sbatch --array=0-125 <your_dir_path>/mit_to_xanthos.sl
 # ------------------------------------------------------------------------------------------
 
 #SBATCH -n 1
