@@ -348,12 +348,13 @@ if __name__ == "__main__":
                         "WIND_trend": "m-per-sec"}
 
     # scenario name to process; should mirror the associated directory name
-    scenario_list = ['PARIS_2C', 'PFCOV.1', 'BASECOV', 'PARIS_1p5C.1', 'PARIS_1p5C', 'PARIS_2C.1', 'PFCOV']
+    scenario_list = ["BASECOV", "PFCOV", "PARIS_1p5C", "PARIS_2C"]
 
     # list of model names to process
-    model_list = ['ACCESS-ESM1-5', 'CMCC-ESM2', 'AWI-ESM-1-1-LR', 'GISS-E2-2-G', 'INM-CM5-0', 'UKESM1-0-LL',
-                  'FGOALS-g3', 'IPSL-CM6A-LR', 'CanESM5', 'FIO-ESM-2-0', 'HadGEM3-GC31-MM', 'SAM0-UNICON',
-                  'CNRM-ESM2-1', 'MRI-ESM2-0', 'BCC-CSM2-MR', 'MIROC-ES2L', 'MPI-ESM1-2-HR', 'EC-Earth3-Veg']
+    model_list = ["ACCESS-ESM1-5", "AWI-ESM-1-1-LR", "BCC-CSM2-MR", "CanESM5",
+                  "CMCC-ESM2", "CNRM-ESM2-1", "EC-Earth3-Veg", "FGOALS-g3", "FIO-ESM-2-0",
+                  "GISS-E2-2-G", "HadGEM3-GC31-MM", "INM-CM5-0", "IPSL-CM6A-LR", "MIROC-ES2L",
+                  "MPI-ESM1-2-HR" "MRI-ESM2-0" "SAM0-UNICON" "UKESM1-0-LL"]
 
     # create cross product list of scenario, model
     scenario_model_list = [i for i in itertools.product(scenario_list, model_list)]
