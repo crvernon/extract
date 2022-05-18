@@ -354,7 +354,7 @@ if __name__ == "__main__":
     model_list = ["ACCESS-ESM1-5", "AWI-ESM-1-1-LR", "BCC-CSM2-MR", "CanESM5",
                   "CMCC-ESM2", "CNRM-ESM2-1", "EC-Earth3-Veg", "FGOALS-g3", "FIO-ESM-2-0",
                   "GISS-E2-2-G", "HadGEM3-GC31-MM", "INM-CM5-0", "IPSL-CM6A-LR", "MIROC-ES2L",
-                  "MPI-ESM1-2-HR" "MRI-ESM2-0" "SAM0-UNICON" "UKESM1-0-LL"]
+                  "MPI-ESM1-2-HR", "MRI-ESM2-0", "SAM0-UNICON", "UKESM1-0-LL"]
 
     # create cross product list of scenario, model
     scenario_model_list = [i for i in itertools.product(scenario_list, model_list)]
